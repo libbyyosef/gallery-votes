@@ -1,3 +1,4 @@
+// src/components/FullscreenModal.tsx
 import React, { useEffect } from "react";
 import {
   Modal,
@@ -45,7 +46,6 @@ export const FullscreenModal: React.FC<Props> = ({
   const isLiked = reaction === "like";
   const isDisliked = reaction === "dislike";
 
-  // Same style as ImageCard overlay buttons (light, semi-transparent when inactive)
   const overlayBtnStyle = (kind: "like" | "dislike") => {
     const active = kind === "like" ? isLiked : isDisliked;
     const token = kind === "like" ? "app.like" : "app.dislike";
@@ -56,7 +56,7 @@ export const FullscreenModal: React.FC<Props> = ({
           bg: token,
           color: "#08130a",
           _hover: { bg: token, filter: "brightness(1.05)" },
-          _active: { transform: "scale(0.98)" },
+          // no _active transform
           borderRadius: "full",
           size: "sm",
           "aria-pressed": true,
@@ -68,14 +68,14 @@ export const FullscreenModal: React.FC<Props> = ({
           borderWidth: "1px",
           borderColor: "blackAlpha.200",
           _hover: { bg: "whiteAlpha.800" },
-          _active: { transform: "scale(0.98)" },
+          // no _active transform
           borderRadius: "full",
           size: "sm",
           "aria-pressed": false,
         };
   };
 
-  // Navigation button style (light, semi-transparent)
+  // ⬇️ Navigation buttons with fixed size and no active-scale to avoid shifting
   const navBtnStyle = {
     variant: "solid" as const,
     bg: "whiteAlpha.700",
@@ -83,9 +83,10 @@ export const FullscreenModal: React.FC<Props> = ({
     borderWidth: "1px",
     borderColor: "blackAlpha.200",
     _hover: { bg: "whiteAlpha.800" },
-    _active: { transform: "scale(0.98)" },
+    _active: { bg: "whiteAlpha.800" }, // no transform here
     borderRadius: "full",
-    size: "md" as const,
+    boxSize: "40px",       // fixed width/height so position doesn't shift
+    minW: "40px",
   };
 
   // Keyboard: ← / → for prev/next, Esc to close
@@ -99,7 +100,6 @@ export const FullscreenModal: React.FC<Props> = ({
         e.preventDefault();
         onNext();
       } else if (e.key === "Escape") {
-        // Chakra already closes on Esc, but call just in case
         onClose();
       }
     };
@@ -118,7 +118,6 @@ export const FullscreenModal: React.FC<Props> = ({
         maxH="88vh"
         position="relative"
       >
-        {/* Colored Close button (light, semi-transparent) */}
         <IconButton
           aria-label="Close"
           icon={<AiOutlineClose />}
@@ -128,11 +127,10 @@ export const FullscreenModal: React.FC<Props> = ({
           onClick={onClose}
           zIndex={3}
           {...navBtnStyle}
-          size="sm"
+          boxSize="32px" // slightly smaller for the close button
         />
 
         <ModalBody p={0} display="flex" alignItems="center" justifyContent="center">
-          {/* Rounded, clipping container so corners are visible */}
           <Box
             lineHeight={0}
             w="100%"
@@ -153,7 +151,7 @@ export const FullscreenModal: React.FC<Props> = ({
               mx="auto"
             />
 
-            {/* Left / Right arrows (centered vertically) */}
+            {/* Left / Right arrows (centered vertically, stable on click) */}
             <IconButton
               aria-label="Previous"
               icon={<AiOutlineLeft />}
