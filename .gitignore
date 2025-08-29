@@ -1,0 +1,67 @@
+# -----------------------------
+# OS & editor junk
+# -----------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# -----------------------------
+# Python (server)
+# -----------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+.python-version
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage*
+coverage.xml
+htmlcov/
+.ipynb_checkpoints/
+
+# If you export test data locally
+votes.csv
+
+# -----------------------------
+# Node / Vite (client)
+# -----------------------------
+client/node_modules/
+client/dist/
+client/.vite/
+client/.env*
+!client/.env.example
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tsbuildinfo
+
+# -----------------------------
+# Docker
+# -----------------------------
+# ignore any local bind-mount data directories you might create
+docker-data/
+*.tar
+
+# -----------------------------
+# Logs
+# -----------------------------
+*.log
+logs/
