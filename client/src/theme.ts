@@ -15,8 +15,7 @@ export const theme = extendTheme({
   },
   colors: {
     app: {
-      // changed background color:
-      bg: '#607D8B',        // was '#0f172a'
+      bg: '#607D8B',        
       surface: '#263238',
       card: '#90A4AE',
       text: '#e5e7eb',

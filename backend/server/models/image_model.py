@@ -1,4 +1,3 @@
-# server/models/image_model.py
 from sqlalchemy import Column, Integer, String, TIMESTAMP, func
 from server.models.base import Base
 
@@ -31,7 +30,6 @@ class ImageModel(Base):
 
     @property
     def is_liked(self) -> bool:
-        # no per-user state; keep false so schema shape is stable
         return False
 
     @property

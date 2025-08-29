@@ -14,7 +14,6 @@ router = APIRouter(prefix="/images", tags=["images"])
 def get_all_images_route(db: Session = Depends(get_db)):
     return image_crud.get_all_images(db)
 
-# ----- counters-only writes (used by frontend) -----
 @router.post("/like/{image_id}")
 def like_image_route(image_id: int, db: Session = Depends(get_db)):
     image_crud.like_image(db, image_id)

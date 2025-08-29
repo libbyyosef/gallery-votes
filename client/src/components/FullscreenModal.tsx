@@ -1,4 +1,3 @@
-// src/components/FullscreenModal.tsx
 import React, { useEffect } from "react";
 import {
   Modal,
@@ -56,7 +55,6 @@ export const FullscreenModal: React.FC<Props> = ({
           bg: token,
           color: "#08130a",
           _hover: { bg: token, filter: "brightness(1.05)" },
-          // no _active transform
           borderRadius: "full",
           size: "sm",
           "aria-pressed": true,
@@ -68,14 +66,12 @@ export const FullscreenModal: React.FC<Props> = ({
           borderWidth: "1px",
           borderColor: "blackAlpha.200",
           _hover: { bg: "whiteAlpha.800" },
-          // no _active transform
           borderRadius: "full",
           size: "sm",
           "aria-pressed": false,
         };
   };
 
-  // ⬇️ Navigation buttons with fixed size and no active-scale to avoid shifting
   const navBtnStyle = {
     variant: "solid" as const,
     bg: "whiteAlpha.700",
@@ -83,9 +79,9 @@ export const FullscreenModal: React.FC<Props> = ({
     borderWidth: "1px",
     borderColor: "blackAlpha.200",
     _hover: { bg: "whiteAlpha.800" },
-    _active: { bg: "whiteAlpha.800" }, // no transform here
+    _active: { bg: "whiteAlpha.800" }, 
     borderRadius: "full",
-    boxSize: "40px",       // fixed width/height so position doesn't shift
+    boxSize: "40px",       
     minW: "40px",
   };
 
@@ -127,7 +123,7 @@ export const FullscreenModal: React.FC<Props> = ({
           onClick={onClose}
           zIndex={3}
           {...navBtnStyle}
-          boxSize="32px" // slightly smaller for the close button
+          boxSize="32px" 
         />
 
         <ModalBody p={0} display="flex" alignItems="center" justifyContent="center">

@@ -1,4 +1,3 @@
-// src/components/ImageCard.tsx
 import React from "react";
 import { Box, HStack, Image, AspectRatio, IconButton, Text } from "@chakra-ui/react";
 import { AiFillLike, AiFillDislike } from "react-icons/ai";
@@ -26,7 +25,6 @@ export const ImageCard: React.FC<ImageCardProps> = ({
   const isLiked = reaction === REACTION.LIKE;
   const isDisliked = reaction === REACTION.DISLIKE;
 
-  // Light, semi-transparent buttons when inactive; solid themed when active
   const overlayBtnStyle = (kind: ReactionKind) => {
     const active = kind === REACTION.LIKE ? isLiked : isDisliked;
     const token = kind === REACTION.LIKE ? "app.like" : "app.dislike";
@@ -44,7 +42,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({
         }
       : {
           variant: "solid" as const,
-          bg: "whiteAlpha.700",            // light & semi-transparent
+          bg: "whiteAlpha.700",           
           color: "blackAlpha.900",
           borderWidth: "1px",
           borderColor: "blackAlpha.200",
@@ -66,26 +64,24 @@ export const ImageCard: React.FC<ImageCardProps> = ({
       display="flex"
       flexDirection="column"
     >
-      {/* Clickable image area; overlay holds buttons inside the same box */}
       <Box
         position="relative"
         onClick={() => onOpen(item)}
         cursor="pointer"
         _hover={{ opacity: 0.98 }}
-        lineHeight={0} // remove inline image baseline gap
+        lineHeight={0} 
       >
         <AspectRatio ratio={4 / 3} w="100%">
           <Image
             src={source_url}
             alt={`Image ${image_id}`}
             objectFit="cover"
-            display="block" // no top whitespace
+            display="block" 
             loading={index < ABOVE_THE_FOLD ? "eager" : "lazy"}
             decoding="async"
           />
         </AspectRatio>
 
-        {/* Bottom overlay with buttons + counts (clicks here won't open the modal) */}
         <HStack
           position="absolute"
           left={0}

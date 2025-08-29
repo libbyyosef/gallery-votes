@@ -1,4 +1,3 @@
-# server/db/db.py
 import os
 from urllib.parse import urlparse, unquote
 from sqlalchemy import create_engine
@@ -8,11 +7,9 @@ from sqlalchemy.engine import URL
 RAW_URL = os.getenv("DATABASE_URL", "postgresql://app:app@localhost:5432/app")
 
 def _as_sqlalchemy_url(raw: str) -> str | URL:
-    # If a driver is already specified (e.g., postgresql+psycopg://), use it as-is
     if raw.startswith("postgresql+"):
         return raw
 
-    # Otherwise, parse a libpq-style URL (postgresql://) and force psycopg3 driver
     u = urlparse(raw)
     return URL.create(
         drivername="postgresql+psycopg",              # psycopg3
@@ -21,7 +18,7 @@ def _as_sqlalchemy_url(raw: str) -> str | URL:
         host=u.hostname or "localhost",
         port=u.port or 5432,
         database=(u.path.lstrip("/") or "postgres"),
-        query={},  # add parsed query params here if you use any
+        query={}, 
     )
 
 SQLALCHEMY_URL = _as_sqlalchemy_url(RAW_URL)

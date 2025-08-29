@@ -1,4 +1,3 @@
-// Central place for reaction literals/types
 export const REACTION = {
   LIKE: "like",
   DISLIKE: "dislike",

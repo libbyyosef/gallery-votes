@@ -24,14 +24,12 @@ class TestDatabaseConnection:
         """Test that transactions can be rolled back"""
         from server.models.image_model import ImageModel
         
-        # Add image but don't commit
         image = ImageModel(picsum_id="test-rollback")
         db_session.add(image)
         
         # Rollback
         db_session.rollback()
         
-        # Verify image wasn't saved
         result = db_session.execute(
             text("SELECT COUNT(*) FROM images WHERE picsum_id = 'test-rollback'")
         ).scalar()

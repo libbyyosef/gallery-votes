@@ -13,7 +13,7 @@ def main() -> None:
     data = resp.json()
     ids = [str(item["id"]) for item in data]
 
-    # 2) Bulk upsert via Core using the model's table (fast & idempotent)
+    # 2) Bulk upsert via Core using the model's table 
     rows = [{"picsum_id": pid} for pid in ids]
     stmt = (
         insert(ImageModel.__table__)
@@ -24,8 +24,8 @@ def main() -> None:
     with engine.begin() as conn:
         result = conn.execute(stmt)
 
-    inserted = getattr(result, "rowcount", None)  # may be -1 on some drivers
-    print(f"✅ Seeded {len(ids)} ids (inserted {inserted if inserted is not None else 'some'} new).")
+    inserted = getattr(result, "rowcount", None) 
+    print(f"Seeded {len(ids)} ids (inserted {inserted if inserted is not None else 'some'} new).")
 
 if __name__ == "__main__":
     main()

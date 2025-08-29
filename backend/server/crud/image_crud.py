@@ -19,7 +19,6 @@ def get_all_images(db: Session) -> List[ImageSchema]:
         select(ImageModel).order_by(ImageModel.image_id)
     ).scalars().all()
 
-    # thanks to the computed properties on ImageModel and pydantic v2 from_attributes=True
     return [ImageSchema.model_validate(obj, from_attributes=True) for obj in items]
 
 def get_counters(db: Session, ids: list[int]) -> list[dict]:

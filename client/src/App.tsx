@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import type { ImageItem } from "./types";
 import { fetchImages, applyReaction } from "./api";
@@ -12,18 +11,18 @@ import { imagesAtom, reactionsAtom } from "./state/images";
 import { downloadCSVClient } from "./export";
 import { REACTION } from "./reaction";
 
-const BATCH_SIZE = 16;  // how many cards to reveal per tick
-const STEP_MS = 200;    // reveal cadence
-const POLL_MS = 5000;   // counters refresh interval
-const WRITE_PAUSE_MS = 1500; // pause polling briefly after local write
+const BATCH_SIZE = 16;  
+const STEP_MS = 200;    
+const POLL_MS = 5000;   
+const WRITE_PAUSE_MS = 1500; 
 
 const App: React.FC = () => {
-  const [images, setImages] = useAtom(imagesAtom);           // ImageItem[] | null
-  const [reactions, setReactions] = useAtom(reactionsAtom);  // Record<image_id, Reaction>
+  const [images, setImages] = useAtom(imagesAtom);           
+  const [reactions, setReactions] = useAtom(reactionsAtom);  
   const [error, setError] = useState<string | null>(null);
 
   const [selected, setSelected] = useState<ImageItem | null>(null);
-  const [selectedIdx, setSelectedIdx] = useState<number>(-1); // keep explicit index for modal nav
+  const [selectedIdx, setSelectedIdx] = useState<number>(-1); 
 
   const [visibleCount, setVisibleCount] = useState(0);
   const didRevealRef = useRef(false);
@@ -31,7 +30,6 @@ const App: React.FC = () => {
   // track last write time to pause polling right after a like/dislike
   const lastWriteRef = useRef(0);
 
-  // Fetch once into atom
   useEffect(() => {
     if (images !== null) return;
     (async () => {
@@ -44,7 +42,6 @@ const App: React.FC = () => {
     })();
   }, [images, setImages]);
 
-  // Progressive reveal (runs once after images load)
   useEffect(() => {
     if (!images || didRevealRef.current) return;
     didRevealRef.current = true;
@@ -58,7 +55,6 @@ const App: React.FC = () => {
     return () => clearInterval(id);
   }, [images]);
 
-  // Instagram-style toggle with optimistic update
   const onVote = useCallback(
     async (id: number, action: Reaction) => {
       const prev: Reaction = reactions[id] ?? null;
@@ -69,7 +65,6 @@ const App: React.FC = () => {
       const dislikesDelta =
         (prev === REACTION.DISLIKE ? -1 : 0) + (next === REACTION.DISLIKE ? +1 : 0);
 
-      // optimistic counts
       setImages((arr) =>
         arr
           ? arr.map((it) =>
@@ -84,7 +79,6 @@ const App: React.FC = () => {
           : arr
       );
 
-      // optimistic reaction
       setReactions((map) => {
         const copy: Record<number, Reaction> = { ...map };
         if (next === null) delete copy[id];
@@ -92,13 +86,11 @@ const App: React.FC = () => {
         return copy;
       });
 
-      // pause polling for a moment after our write
       lastWriteRef.current = Date.now();
 
       try {
         await applyReaction(id, prev, next);
       } catch (e) {
-        // rollback counts
         setImages((arr) =>
           arr
             ? arr.map((it) =>
@@ -112,7 +104,6 @@ const App: React.FC = () => {
               )
             : arr
         );
-        // rollback reaction
         setReactions((map) => {
           const copy: Record<number, Reaction> = { ...map };
           if (prev === null) delete copy[id];
@@ -145,7 +136,6 @@ const App: React.FC = () => {
             : prev
         );
       } catch {
-        // best-effort; ignore transient errors
       }
     }, POLL_MS);
 
@@ -153,13 +143,11 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [images?.length, setImages]);
 
-  // Open modal and remember which index was clicked
   const openAtIndex = useCallback((item: ImageItem, idx: number) => {
     setSelected(item);
     setSelectedIdx(idx);
   }, []);
 
-  // Prev / Next using the tracked index (wrap-around)
   const goPrev = useCallback(() => {
     if (!images || selectedIdx < 0) return;
     const idx = (selectedIdx - 1 + images.length) % images.length;
@@ -174,13 +162,11 @@ const App: React.FC = () => {
     setSelected(images[idx]);
   }, [images, selectedIdx]);
 
-  // Keep modal item live-updating with counters while preserving selection index
   useEffect(() => {
     if (!images || selectedIdx < 0) return;
     const current = images[selectedIdx];
     if (!current) return;
 
-    // If the selected object instance changed (e.g., counters updated), sync it
     setSelected(current);
   }, [images, selectedIdx]);
 
@@ -220,7 +206,7 @@ const App: React.FC = () => {
                 item={img}
                 index={i}
                 reaction={reactions[img.image_id] ?? null}
-                onOpen={(item) => openAtIndex(item, i)} // capture index here
+                onOpen={(item) => openAtIndex(item, i)} 
                 onVote={onVote}
               />
             ))}

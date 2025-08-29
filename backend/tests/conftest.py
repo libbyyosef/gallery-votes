@@ -2,8 +2,7 @@ import pytest
 import sys
 from pathlib import Path
 
-# Add the backend directory to Python path
-backend_dir = Path(__file__).parent.parent  # Go up from tests/ to backend/
+backend_dir = Path(__file__).parent.parent 
 sys.path.insert(0, str(backend_dir))
 
 from fastapi.testclient import TestClient
@@ -16,7 +15,6 @@ from server.models.base import Base
 from server.models.image_model import ImageModel
 from server.main import app
 
-# In-memory SQLite for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
@@ -61,7 +59,6 @@ def sample_images(db_session):
     db_session.add_all(images)
     db_session.commit()
     
-    # Refresh to get auto-generated image_ids
     for img in images:
         db_session.refresh(img)
     

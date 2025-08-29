@@ -9,7 +9,6 @@ class TestImageCrudReads:
     
     def test_ensure_image_exists(self, db_session, sample_images):
         """Test _ensure_image with existing image"""
-        # Should not raise exception
         image_crud._ensure_image(db_session, sample_images[0].image_id)
     
     def test_ensure_image_not_exists(self, db_session):
@@ -34,7 +33,6 @@ class TestImageCrudReads:
         assert len(result) == 3
         assert all(isinstance(img, ImageSchema) for img in result)
         
-        # Check first image
         first_img = result[0]
         assert first_img.image_id == sample_images[0].image_id
         assert first_img.source_url.startswith("https://picsum.photos/id/237/")
@@ -74,28 +72,25 @@ class TestImageCrudLikes:
     
     def test_like_image_success(self, db_session, sample_images):
         """Test like_image increments counter"""
-        image_id = sample_images[1].image_id  # starts with 0 likes
+        image_id = sample_images[1].image_id  
         
         result = image_crud.like_image(db_session, image_id)
         
         assert result.ok is True
         
-        # Check database was updated
         updated_image = db_session.get(ImageModel, image_id)
         assert updated_image.like_count == 1
-        assert updated_image.dislike_count == 0  # unchanged
+        assert updated_image.dislike_count == 0  
     
     def test_like_image_multiple_times(self, db_session, sample_images):
         """Test like_image can be called multiple times"""
-        image_id = sample_images[0].image_id  # starts with 5 likes
+        image_id = sample_images[0].image_id 
         
-        # Like twice
         image_crud.like_image(db_session, image_id)
         image_crud.like_image(db_session, image_id)
         
-        # Check database
         updated_image = db_session.get(ImageModel, image_id)
-        assert updated_image.like_count == 7  # 5 + 2
+        assert updated_image.like_count == 7  
     
     def test_like_image_invalid_id(self, db_session):
         """Test like_image with non-existent image"""
@@ -106,25 +101,23 @@ class TestImageCrudLikes:
     
     def test_unlike_image_success(self, db_session, sample_images):
         """Test unlike_image decrements counter"""
-        image_id = sample_images[0].image_id  # starts with 5 likes
+        image_id = sample_images[0].image_id  
         
         result = image_crud.unlike_image(db_session, image_id)
         
         assert result.ok is True
         
-        # Check database
         updated_image = db_session.get(ImageModel, image_id)
-        assert updated_image.like_count == 4  # 5 - 1
+        assert updated_image.like_count == 4  
     
     def test_unlike_image_at_zero(self, db_session, sample_images):
         """Test unlike_image doesn't go below zero"""
-        image_id = sample_images[1].image_id  # starts with 0 likes
+        image_id = sample_images[1].image_id  
         
         result = image_crud.unlike_image(db_session, image_id)
         
         assert result.ok is True
         
-        # Check it stays at 0
         updated_image = db_session.get(ImageModel, image_id)
         assert updated_image.like_count == 0
     
@@ -140,16 +133,15 @@ class TestImageCrudDislikes:
     
     def test_dislike_image_success(self, db_session, sample_images):
         """Test dislike_image increments counter"""
-        image_id = sample_images[1].image_id  # starts with 0 dislikes
+        image_id = sample_images[1].image_id  
         
         result = image_crud.dislike_image(db_session, image_id)
         
         assert result.ok is True
         
-        # Check database
         updated_image = db_session.get(ImageModel, image_id)
         assert updated_image.dislike_count == 1
-        assert updated_image.like_count == 0  # unchanged
+        assert updated_image.like_count == 0  
     
     def test_dislike_image_invalid_id(self, db_session):
         """Test dislike_image with non-existent image"""
@@ -160,25 +152,23 @@ class TestImageCrudDislikes:
     
     def test_undislike_image_success(self, db_session, sample_images):
         """Test undislike_image decrements counter"""
-        image_id = sample_images[0].image_id  # starts with 2 dislikes
+        image_id = sample_images[0].image_id  
         
         result = image_crud.undislike_image(db_session, image_id)
         
         assert result.ok is True
         
-        # Check database
         updated_image = db_session.get(ImageModel, image_id)
-        assert updated_image.dislike_count == 1  # 2 - 1
+        assert updated_image.dislike_count == 1  
     
     def test_undislike_image_at_zero(self, db_session, sample_images):
         """Test undislike_image doesn't go below zero"""
-        image_id = sample_images[1].image_id  # starts with 0 dislikes
+        image_id = sample_images[1].image_id  
         
         result = image_crud.undislike_image(db_session, image_id)
         
         assert result.ok is True
         
-        # Check it stays at 0
         updated_image = db_session.get(ImageModel, image_id)
         assert updated_image.dislike_count == 0
     
