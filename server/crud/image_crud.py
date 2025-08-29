@@ -7,6 +7,8 @@ from server.models.image_model import ImageModel
 from server.schemas.image_schema import ImageSchema
 from server.schemas.common_schema import ActionResultSchema
 
+MAX_IMAGES = 100
+
 def _ensure_image(db: Session, image_id: int) -> None:
     row = db.execute(text("SELECT 1 FROM public.images WHERE image_id = :iid"), {"iid": image_id}).first()
     if not row:
@@ -15,10 +17,16 @@ def _ensure_image(db: Session, image_id: int) -> None:
 # ----- reads -----
 
 def get_all_images(db: Session) -> List[ImageSchema]:
-    items = db.execute(
-        select(ImageModel).order_by(ImageModel.image_id)
-    ).scalars().all()
-
+    items = (
+        db.execute(
+            select(ImageModel)
+            .order_by(ImageModel.image_id.asc())
+            .limit(MAX_IMAGES)
+        )
+        .scalars()
+        .all()
+    )
+    print("items",items)
     return [ImageSchema.model_validate(obj, from_attributes=True) for obj in items]
 
 def get_counters(db: Session, ids: list[int]) -> list[dict]:

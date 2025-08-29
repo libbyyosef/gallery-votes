@@ -10,7 +10,7 @@ def apply_schema() -> None:
     sql = SCHEMA_PATH.read_text(encoding="utf-8")
     with engine.begin() as conn:
         conn.exec_driver_sql(sql)
-    print(f"✅ Applied schema: {SCHEMA_PATH}")
+    print(f" Applied schema: {SCHEMA_PATH}")
 
 if __name__ == "__main__":
     apply_schema()
