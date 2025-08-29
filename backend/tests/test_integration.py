@@ -35,31 +35,7 @@ class TestIntegrationWorkflow:
         assert final_image["likes"] == 2  # 3 likes - 1 unlike
         assert final_image["dislikes"] == 1
     
-    def test_csv_export_after_voting(self, client, sample_images):
-        """Test CSV export reflects voting changes"""
-        image_id = sample_images[0].image_id
-        
-        # Vote on image
-        client.post(f"/images/like/{image_id}")
-        client.post(f"/images/dislike/{image_id}")
-        
-        # Export CSV
-        response = client.get("/images/export_votes_as_csv")
-        assert response.status_code == 200
-        
-        content = response.text
-        lines = content.strip().split('\n')
-        
-        # Find the row for our image
-        image_row = None
-        for line in lines[1:]:  # Skip header
-            if f"https://picsum.photos/id/237/" in line:
-                image_row = line
-                break
-        
-        assert image_row is not None
-        assert "6" in image_row  # 5 + 1 likes
-        assert "3" in image_row  # 2 + 1 dislikes
+   
     
     def test_counters_endpoint_after_voting(self, client, sample_images):
         """Test counters endpoint reflects voting changes"""
@@ -116,12 +92,7 @@ class TestErrorHandling:
         assert response.status_code == 200
         assert response.json() == []
         
-        # Export CSV
-        response = client.get("/images/export_votes_as_csv")
-        assert response.status_code == 200
-        content = response.text
-        lines = content.strip().split('\n')
-        assert len(lines) == 1  # Just header
+       
         
         # Get counters with empty list
         response = client.get("/images/counters")

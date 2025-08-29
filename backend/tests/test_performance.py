@@ -50,30 +50,4 @@ class TestPerformance:
         assert len(result) == 100
         assert elapsed < 1.0  # Should complete within 1 second
     
-    def test_csv_export_performance(self, db_session):
-        """Test CSV export performance with many images"""
-        # Create 50 images
-        images = []
-        for i in range(50):
-            images.append(ImageModel(
-                picsum_id=str(i),
-                like_count=i * 2,
-                dislike_count=i
-            ))
-        
-        db_session.add_all(images)
-        db_session.commit()
-        
-        from server.crud import image_crud
-        
-        start_time = time.time()
-        response = image_crud.export_votes_as_csv(db_session)
-        elapsed = time.time() - start_time
-        
-        assert response.media_type == "text/csv"
-        assert elapsed < 2.0  # Should complete within 2 seconds
-        
-        # Verify CSV content
-        content = response.body.decode()
-        lines = content.strip().split('\n')
-        assert len(lines) == 51  # Header + 50 images
+   

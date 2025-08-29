@@ -189,39 +189,6 @@ class TestImageCrudDislikes:
         
         assert exc_info.value.status_code == 404
 
-class TestImageCrudExport:
-    """Test image_crud CSV export functionality"""
+
     
-    def test_export_votes_as_csv_empty(self, db_session):
-        """Test CSV export with no images"""
-        response = image_crud.export_votes_as_csv(db_session)
-        
-        assert response.media_type == "text/csv"
-        assert response.headers["Content-Disposition"] == "attachment; filename=votes.csv"
-        
-        content = response.body.decode()
-        lines = content.strip().split('\n')
-        assert len(lines) == 1  # Just header
-        assert "Image URL,Likes,Dislikes" in lines[0]
     
-    def test_export_votes_as_csv_with_data(self, db_session, sample_images):
-        """Test CSV export with sample data"""
-        response = image_crud.export_votes_as_csv(db_session)
-        
-        assert response.media_type == "text/csv"
-        
-        content = response.body.decode()
-        lines = content.strip().split('\n')
-        assert len(lines) == 4  # Header + 3 images
-        
-        # Check header
-        header = lines[0]
-        expected_fields = ["Image URL", "Likes", "Dislikes", "Is Current User Liked", "Is Current User Dislike"]
-        for field in expected_fields:
-            assert field in header
-        
-        # Check first data row
-        first_row = lines[1]
-        assert "https://picsum.photos/id/237/" in first_row
-        assert "5" in first_row  # likes
-        assert "2" in first_row  # dislikes

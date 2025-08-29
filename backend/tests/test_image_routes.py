@@ -52,22 +52,7 @@ class TestImageRoutesGet:
         # Should return 422 because ids parameter is required
         assert response.status_code == 422
     
-    def test_export_csv_endpoint(self, client, sample_images):
-        """Test GET /images/export_votes_as_csv"""
-        response = client.get("/images/export_votes_as_csv")
-        
-        assert response.status_code == 200
-        assert response.headers["content-type"] == "text/csv; charset=utf-8"
-        assert "attachment; filename=votes.csv" in response.headers["content-disposition"]
-        
-        content = response.text
-        lines = content.strip().split('\n')
-        assert len(lines) == 4  # Header + 3 images
-        
-        # Check header exists
-        assert "Image URL" in lines[0]
-        assert "Likes" in lines[0]
-        assert "Dislikes" in lines[0]
+   
 
 class TestImageRoutesLike:
     """Test image API like/unlike routes"""

@@ -41,7 +41,3 @@ def get_counters_route(
     db: Session = Depends(get_db),
 ):
     return image_crud.get_counters(db, ids)
-# ----- CSV export -----
-@router.get("/export_votes_as_csv")
-def export_votes_as_csv_route(db: Session = Depends(get_db)):
-    return image_crud.export_votes_as_csv(db)

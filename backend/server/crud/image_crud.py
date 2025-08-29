@@ -62,37 +62,3 @@ def undislike_image(db: Session, image_id: int) -> ActionResultSchema:
     db.execute(text("UPDATE public.images SET dislike_count = GREATEST(dislike_count - 1, 0) WHERE image_id = :iid"), {"iid": image_id})
     db.commit()
     return ActionResultSchema(ok=True)
-
-# ----- CSV export -----
-
-def export_votes_as_csv(db: Session) -> Response:
-    items = get_all_images(db)  # list[ImageSchema]
-
-    import csv
-    from io import StringIO
-    buf = StringIO()
-
-    fieldnames = [
-        "Image URL",
-        "Likes",
-        "Dislikes",
-        "Is Current User Liked",
-        "Is Current User Dislike",
-    ]
-    writer = csv.DictWriter(buf, fieldnames=fieldnames)
-    writer.writeheader()
-
-    for item in items:
-        writer.writerow({
-            "Image URL": item.source_url,
-            "Likes": item.likes,
-            "Dislikes": item.dislikes,
-            "Is Current User Liked": item.is_liked,
-            "Is Current User Dislike": item.is_disliked,
-        })
-
-    return Response(
-        content=buf.getvalue(),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=votes.csv"},
-    )
