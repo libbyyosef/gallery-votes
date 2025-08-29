@@ -3,7 +3,7 @@ import { REACTION, type Reaction } from "./reaction";
 export type { Reaction } from "./reaction";
 
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '')
 
 export async function fetchCounters(
   ids: number[]
