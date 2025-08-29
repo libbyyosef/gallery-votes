@@ -11,16 +11,24 @@ import { useAtom } from "jotai";
 import { imagesAtom, reactionsAtom } from "./state/images";
 import { downloadCSVClient } from "./export";
 
-const BATCH_SIZE = 16;
-const STEP_MS = 200;
+const BATCH_SIZE = 16;  // how many cards to reveal per tick
+const STEP_MS = 200;    // reveal cadence
+const POLL_MS = 5000;   // counters refresh interval
+const WRITE_PAUSE_MS = 1500; // pause polling briefly after local write
 
 const App: React.FC = () => {
-  const [images, setImages] = useAtom(imagesAtom);
-  const [reactions, setReactions] = useAtom(reactionsAtom);
+  const [images, setImages] = useAtom(imagesAtom);           // ImageItem[] | null
+  const [reactions, setReactions] = useAtom(reactionsAtom);  // Record<image_id, Reaction>
   const [error, setError] = useState<string | null>(null);
+
   const [selected, setSelected] = useState<ImageItem | null>(null);
+  const [selectedIdx, setSelectedIdx] = useState<number>(-1); // keep explicit index for modal nav
+
   const [visibleCount, setVisibleCount] = useState(0);
   const didRevealRef = useRef(false);
+
+  // track last write time to pause polling right after a like/dislike
+  const lastWriteRef = useRef(0);
 
   // Fetch once into atom
   useEffect(() => {
@@ -77,11 +85,14 @@ const App: React.FC = () => {
 
       // optimistic reaction
       setReactions((map) => {
-        const copy = { ...map };
+        const copy: Record<number, Reaction> = { ...map };
         if (next === null) delete copy[id];
         else copy[id] = next;
         return copy;
       });
+
+      // pause polling for a moment after our write
+      lastWriteRef.current = Date.now();
 
       try {
         await applyReaction(id, prev, next);
@@ -102,7 +113,7 @@ const App: React.FC = () => {
         );
         // rollback reaction
         setReactions((map) => {
-          const copy = { ...map };
+          const copy: Record<number, Reaction> = { ...map };
           if (prev === null) delete copy[id];
           else copy[id] = prev;
           return copy;
@@ -113,11 +124,64 @@ const App: React.FC = () => {
     [reactions, setImages, setReactions]
   );
 
-  // Live item for modal
-  const selectedLive: ImageItem | null =
-    selected && images
-      ? images.find((it) => it.image_id === selected.image_id) ?? selected
-      : selected;
+  // Polling: every few seconds merge ONLY counters so users see each other's likes
+  useEffect(() => {
+    if (!images || images.length === 0) return;
+
+    const interval = setInterval(async () => {
+      if (document.hidden) return;
+      if (Date.now() - lastWriteRef.current < WRITE_PAUSE_MS) return;
+
+      try {
+        const fresh = await fetchImages();
+        const map = new Map<number, ImageItem>(fresh.map((f) => [f.image_id, f]));
+        setImages((prev) =>
+          prev
+            ? prev.map((it) => {
+                const f = map.get(it.image_id);
+                return f ? { ...it, likes: f.likes, dislikes: f.dislikes } : it;
+              })
+            : prev
+        );
+      } catch {
+        // best-effort; ignore transient errors
+      }
+    }, POLL_MS);
+
+    // recreate interval only if image count changes
+    return () => clearInterval(interval);
+  }, [images?.length, setImages]);
+
+  // Open modal and remember which index was clicked
+  const openAtIndex = useCallback((item: ImageItem, idx: number) => {
+    setSelected(item);
+    setSelectedIdx(idx);
+  }, []);
+
+  // Prev / Next using the tracked index (wrap-around)
+  const goPrev = useCallback(() => {
+    if (!images || selectedIdx < 0) return;
+    const idx = (selectedIdx - 1 + images.length) % images.length;
+    setSelectedIdx(idx);
+    setSelected(images[idx]);
+  }, [images, selectedIdx]);
+
+  const goNext = useCallback(() => {
+    if (!images || selectedIdx < 0) return;
+    const idx = (selectedIdx + 1) % images.length;
+    setSelectedIdx(idx);
+    setSelected(images[idx]);
+  }, [images, selectedIdx]);
+
+  // Keep modal item live-updating with counters while preserving selection index
+  useEffect(() => {
+    if (!images || selectedIdx < 0) return;
+    const current = images[selectedIdx];
+    if (!current) return;
+
+    // If the selected object instance changed (e.g., counters updated), sync it
+    setSelected(current);
+  }, [images, selectedIdx]);
 
   return (
     <Box bg="app.bg" minH="100%" color="app.text">
@@ -143,11 +207,6 @@ const App: React.FC = () => {
         )}
 
         {images && (
-          /**
-           * Auto-fit grid:
-           * - minChildWidth tells Chakra to create as many columns as fit.
-           * - No fixed max container width, so it stretches to page edges.
-           */
           <SimpleGrid
             minChildWidth={{ base: "160px", sm: "200px", md: "220px", lg: "240px" }}
             spacing={4}
@@ -160,7 +219,7 @@ const App: React.FC = () => {
                 item={img}
                 index={i}
                 reaction={reactions[img.image_id] ?? null}
-                onOpen={setSelected}
+                onOpen={(item) => openAtIndex(item, i)} // capture index here
                 onVote={onVote}
               />
             ))}
@@ -169,11 +228,16 @@ const App: React.FC = () => {
       </Box>
 
       <FullscreenModal
-        open={!!selectedLive}
-        item={selectedLive}
-        reaction={selectedLive ? reactions[selectedLive.image_id] ?? null : null}
-        onClose={() => setSelected(null)}
+        open={!!selected}
+        item={selected}
+        reaction={selected ? reactions[selected.image_id] ?? null : null}
+        onClose={() => {
+          setSelected(null);
+          setSelectedIdx(-1);
+        }}
         onVote={onVote}
+        onPrev={goPrev}
+        onNext={goNext}
       />
     </Box>
   );

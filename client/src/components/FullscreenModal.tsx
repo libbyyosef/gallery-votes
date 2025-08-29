@@ -1,5 +1,4 @@
-// src/components/FullscreenModal.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Modal,
   ModalOverlay,
@@ -11,7 +10,13 @@ import {
   Text,
   Image,
 } from "@chakra-ui/react";
-import { AiOutlineClose, AiFillLike, AiFillDislike } from "react-icons/ai";
+import {
+  AiOutlineClose,
+  AiFillLike,
+  AiFillDislike,
+  AiOutlineLeft,
+  AiOutlineRight,
+} from "react-icons/ai";
 import type { ImageItem, VoteAction } from "../types";
 import type { Reaction } from "../api";
 
@@ -21,6 +26,8 @@ type Props = {
   reaction: Reaction | null;
   onClose: () => void;
   onVote: (id: number, action: VoteAction) => Promise<void>;
+  onPrev: () => void;
+  onNext: () => void;
 };
 
 export const FullscreenModal: React.FC<Props> = ({
@@ -29,6 +36,8 @@ export const FullscreenModal: React.FC<Props> = ({
   reaction,
   onClose,
   onVote,
+  onPrev,
+  onNext,
 }) => {
   if (!item) return null;
   const { image_id, source_url, likes, dislikes } = item;
@@ -66,6 +75,38 @@ export const FullscreenModal: React.FC<Props> = ({
         };
   };
 
+  // Navigation button style (light, semi-transparent)
+  const navBtnStyle = {
+    variant: "solid" as const,
+    bg: "whiteAlpha.700",
+    color: "blackAlpha.900",
+    borderWidth: "1px",
+    borderColor: "blackAlpha.200",
+    _hover: { bg: "whiteAlpha.800" },
+    _active: { transform: "scale(0.98)" },
+    borderRadius: "full",
+    size: "md" as const,
+  };
+
+  // Keyboard: ← / → for prev/next, Esc to close
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        onPrev();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        onNext();
+      } else if (e.key === "Escape") {
+        // Chakra already closes on Esc, but call just in case
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onPrev, onNext, onClose]);
+
   return (
     <Modal isOpen={open} onClose={onClose} size="6xl" isCentered>
       <ModalOverlay />
@@ -85,20 +126,13 @@ export const FullscreenModal: React.FC<Props> = ({
           top="12px"
           right="12px"
           onClick={onClose}
-          zIndex={2}
-          borderRadius="full"
+          zIndex={3}
+          {...navBtnStyle}
           size="sm"
-          variant="solid"
-          bg="whiteAlpha.700"
-          color="blackAlpha.900"
-          borderWidth="1px"
-          borderColor="blackAlpha.200"
-          _hover={{ bg: "whiteAlpha.800" }}
-          _active={{ transform: "scale(0.98)" }}
         />
 
         <ModalBody p={0} display="flex" alignItems="center" justifyContent="center">
-          {/* Rounded container that clips the image & overlay */}
+          {/* Rounded, clipping container so corners are visible */}
           <Box
             lineHeight={0}
             w="100%"
@@ -117,6 +151,36 @@ export const FullscreenModal: React.FC<Props> = ({
               objectFit="contain"
               display="block"
               mx="auto"
+            />
+
+            {/* Left / Right arrows (centered vertically) */}
+            <IconButton
+              aria-label="Previous"
+              icon={<AiOutlineLeft />}
+              position="absolute"
+              top="50%"
+              left="10px"
+              transform="translateY(-50%)"
+              zIndex={2}
+              onClick={(e) => {
+                e.stopPropagation();
+                onPrev();
+              }}
+              {...navBtnStyle}
+            />
+            <IconButton
+              aria-label="Next"
+              icon={<AiOutlineRight />}
+              position="absolute"
+              top="50%"
+              right="10px"
+              transform="translateY(-50%)"
+              zIndex={2}
+              onClick={(e) => {
+                e.stopPropagation();
+                onNext();
+              }}
+              {...navBtnStyle}
             />
 
             {/* Bottom overlay with centered controls */}
