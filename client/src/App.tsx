@@ -1,6 +1,6 @@
 // src/App.tsx
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import type { ImageItem, VoteAction } from "./types";
+import type { ImageItem } from "./types";
 import { fetchImages, applyReaction } from "./api";
 import type { Reaction } from "./api";
 import { Header } from "./components/Header";
@@ -10,6 +10,7 @@ import { Box, SimpleGrid, Text } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import { imagesAtom, reactionsAtom } from "./state/images";
 import { downloadCSVClient } from "./export";
+import { REACTION } from "./reaction";
 
 const BATCH_SIZE = 16;  // how many cards to reveal per tick
 const STEP_MS = 200;    // reveal cadence
@@ -59,14 +60,14 @@ const App: React.FC = () => {
 
   // Instagram-style toggle with optimistic update
   const onVote = useCallback(
-    async (id: number, action: VoteAction) => {
+    async (id: number, action: Reaction) => {
       const prev: Reaction = reactions[id] ?? null;
       const next: Reaction = prev === action ? null : action;
 
       const likesDelta =
-        (prev === "like" ? -1 : 0) + (next === "like" ? +1 : 0);
+        (prev === REACTION.LIKE ? -1 : 0) + (next === REACTION.LIKE ? +1 : 0);
       const dislikesDelta =
-        (prev === "dislike" ? -1 : 0) + (next === "dislike" ? +1 : 0);
+        (prev === REACTION.DISLIKE ? -1 : 0) + (next === REACTION.DISLIKE ? +1 : 0);
 
       // optimistic counts
       setImages((arr) =>

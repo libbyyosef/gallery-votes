@@ -7,4 +7,3 @@ export type ImageItem = {
   is_disliked: boolean;
 };
 
-export type VoteAction = "like" | "dislike";

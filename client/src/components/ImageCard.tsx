@@ -2,13 +2,13 @@
 import React from "react";
 import { Box, HStack, Image, AspectRatio, IconButton, Text } from "@chakra-ui/react";
 import { AiFillLike, AiFillDislike } from "react-icons/ai";
-import type { ImageItem, VoteAction } from "../types";
-import type { Reaction } from "../api";
+import type { ImageItem } from "../types";
+import { REACTION, type Reaction, type ReactionKind } from "../reaction";
 
 type ImageCardProps = {
   item: ImageItem;
   onOpen: (item: ImageItem) => void;
-  onVote: (id: number, action: VoteAction) => Promise<void>;
+  onVote: (id: number, action: Reaction) => Promise<void>;
   index?: number;           // used for eager/lazy loading
   reaction?: Reaction | null;
 };
@@ -23,13 +23,13 @@ export const ImageCard: React.FC<ImageCardProps> = ({
   reaction = null,
 }) => {
   const { image_id, source_url, likes, dislikes } = item;
-  const isLiked = reaction === "like";
-  const isDisliked = reaction === "dislike";
+  const isLiked = reaction === REACTION.LIKE;
+  const isDisliked = reaction === REACTION.DISLIKE;
 
   // Light, semi-transparent buttons when inactive; solid themed when active
-  const overlayBtnStyle = (kind: "like" | "dislike") => {
-    const active = kind === "like" ? isLiked : isDisliked;
-    const token = kind === "like" ? "app.like" : "app.dislike";
+  const overlayBtnStyle = (kind: ReactionKind) => {
+    const active = kind === REACTION.LIKE ? isLiked : isDisliked;
+    const token = kind === REACTION.LIKE ? "app.like" : "app.dislike";
 
     return active
       ? {
@@ -44,7 +44,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({
         }
       : {
           variant: "solid" as const,
-          bg: "whiteAlpha.700",            // ⬅️ light & semi-transparent
+          bg: "whiteAlpha.700",            // light & semi-transparent
           color: "blackAlpha.900",
           borderWidth: "1px",
           borderColor: "blackAlpha.200",
@@ -102,8 +102,8 @@ export const ImageCard: React.FC<ImageCardProps> = ({
               aria-label="Like"
               title="Like"
               icon={<AiFillLike />}
-              onClick={() => onVote(image_id, "like")}
-              {...overlayBtnStyle("like")}
+              onClick={() => onVote(image_id, REACTION.LIKE)}
+              {...overlayBtnStyle(REACTION.LIKE)}
             />
             <Text as="span" minW="2ch" textAlign="right" color="whiteAlpha.900">
               {likes}
@@ -115,8 +115,8 @@ export const ImageCard: React.FC<ImageCardProps> = ({
               aria-label="Dislike"
               title="Dislike"
               icon={<AiFillDislike />}
-              onClick={() => onVote(image_id, "dislike")}
-              {...overlayBtnStyle("dislike")}
+              onClick={() => onVote(image_id, REACTION.DISLIKE)}
+              {...overlayBtnStyle(REACTION.DISLIKE)}
             />
             <Text as="span" minW="2ch" textAlign="right" color="whiteAlpha.900">
               {dislikes}

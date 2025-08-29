@@ -1,5 +1,6 @@
 import type { ImageItem } from "./types";
-import type { Reaction } from "./api";
+import { REACTION, type Reaction } from "./reaction";
+export type { Reaction } from "./reaction";
 
 /** Generate & download CSV using the current client state. */
 export function downloadCSVClient(
@@ -16,8 +17,8 @@ export function downloadCSVClient(
 
   const lines = images.map((it) => {
     const r = reactions[it.image_id] ?? null;
-    const liked = r === "like";
-    const disliked = r === "dislike";
+    const liked = r === REACTION.LIKE;
+    const disliked = r === REACTION.DISLIKE;
     return [
       it.source_url,
       String(it.likes),

@@ -18,15 +18,15 @@ import {
   AiOutlineLeft,
   AiOutlineRight,
 } from "react-icons/ai";
-import type { ImageItem, VoteAction } from "../types";
-import type { Reaction } from "../api";
+import type { ImageItem } from "../types";
+import { REACTION, type Reaction, type ReactionKind } from "../reaction";
 
 type Props = {
   open: boolean;
   item: ImageItem | null;
   reaction: Reaction | null;
   onClose: () => void;
-  onVote: (id: number, action: VoteAction) => Promise<void>;
+  onVote: (id: number, action: Reaction) => Promise<void>;
   onPrev: () => void;
   onNext: () => void;
 };
@@ -43,12 +43,12 @@ export const FullscreenModal: React.FC<Props> = ({
   if (!item) return null;
   const { image_id, source_url, likes, dislikes } = item;
 
-  const isLiked = reaction === "like";
-  const isDisliked = reaction === "dislike";
+  const isLiked = reaction === REACTION.LIKE;
+  const isDisliked = reaction === REACTION.DISLIKE;
 
-  const overlayBtnStyle = (kind: "like" | "dislike") => {
-    const active = kind === "like" ? isLiked : isDisliked;
-    const token = kind === "like" ? "app.like" : "app.dislike";
+  const overlayBtnStyle = (kind: Reaction) => {
+    const active = kind ===REACTION.LIKE ? isLiked : isDisliked;
+    const token = kind ===REACTION.LIKE ? "app.like" : "app.dislike";
 
     return active
       ? {
@@ -198,8 +198,8 @@ export const FullscreenModal: React.FC<Props> = ({
                     aria-label="Like"
                     title="Like"
                     icon={<AiFillLike />}
-                    onClick={() => onVote(image_id, "like")}
-                    {...overlayBtnStyle("like")}
+                    onClick={() => onVote(image_id, REACTION.LIKE)}
+                    {...overlayBtnStyle(REACTION.LIKE)}
                   />
                   <Text as="span" minW="2ch" textAlign="right" color="whiteAlpha.900">
                     {likes}
@@ -211,8 +211,8 @@ export const FullscreenModal: React.FC<Props> = ({
                     aria-label="Dislike"
                     title="Dislike"
                     icon={<AiFillDislike />}
-                    onClick={() => onVote(image_id, "dislike")}
-                    {...overlayBtnStyle("dislike")}
+                    onClick={() => onVote(image_id, REACTION.DISLIKE)}
+                    {...overlayBtnStyle(REACTION.DISLIKE)}
                   />
                   <Text as="span" minW="2ch" textAlign="right" color="whiteAlpha.900">
                     {dislikes}

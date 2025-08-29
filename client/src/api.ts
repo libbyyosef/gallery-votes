@@ -1,4 +1,7 @@
-import type { ImageItem, VoteAction } from "./types";
+import type { ImageItem } from "./types";
+import { REACTION, type Reaction } from "./reaction";
+export type { Reaction } from "./reaction";
+
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
 
@@ -32,8 +35,6 @@ export async function fetchImages(): Promise<ImageItem[]> {
   return data;
 }
 
-/** Your local reaction state type. */
-export type Reaction = "like" | "dislike" | null;
 
 /**
  * Apply an Instagram-style reaction transition.
@@ -56,26 +57,22 @@ export async function applyReaction(
   const undislikeURL = `${API_BASE}/images/undislike/${imageId}`;
 
   // none -> like / dislike
-  if (prev === null && next === "like") return post(likeURL);
-  if (prev === null && next === "dislike") return post(dislikeURL);
+  if (prev === null && next ===  REACTION.LIKE) return post(likeURL);
+  if (prev === null && next === REACTION.DISLIKE) return post(dislikeURL);
 
   // like -> none / dislike
-  if (prev === "like" && next === null) return post(unlikeURL);
-  if (prev === "like" && next === "dislike") {
+  if (prev === REACTION.LIKE && next === null) return post(unlikeURL);
+  if (prev === REACTION.LIKE && next ===REACTION.DISLIKE) {
     await post(unlikeURL);
     return post(dislikeURL);
   }
 
   // dislike -> none / like
-  if (prev === "dislike" && next === null) return post(undislikeURL);
-  if (prev === "dislike" && next === "like") {
+  if (prev === REACTION.DISLIKE && next === null) return post(undislikeURL);
+  if (prev === REACTION.DISLIKE && next === REACTION.LIKE) {
     await post(undislikeURL);
     return post(likeURL);
   }
 }
 
-/** Back-compat convenience: treat as "none -> action". */
-export async function sendVote(imageId: number, action: VoteAction): Promise<void> {
-  return applyReaction(imageId, null, action);
-}
 
