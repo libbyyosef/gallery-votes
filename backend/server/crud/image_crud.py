@@ -67,14 +67,29 @@ def undislike_image(db: Session, image_id: int) -> ActionResultSchema:
 
 def export_votes_as_csv(db: Session) -> Response:
     items = get_all_images(db)  # list[ImageSchema]
+
     import csv
     from io import StringIO
     buf = StringIO()
-    fieldnames = ["image_id", "source_url", "likes", "dislikes", "is_liked", "is_disliked"]
+
+    fieldnames = [
+        "Image URL",
+        "Likes",
+        "Dislikes",
+        "Is Current User Liked",
+        "Is Current User Dislike",
+    ]
     writer = csv.DictWriter(buf, fieldnames=fieldnames)
     writer.writeheader()
+
     for item in items:
-        writer.writerow(item.model_dump())
+        writer.writerow({
+            "Image URL": item.source_url,
+            "Likes": item.likes,
+            "Dislikes": item.dislikes,
+            "Is Current User Liked": item.is_liked,
+            "Is Current User Dislike": item.is_disliked,
+        })
 
     return Response(
         content=buf.getvalue(),

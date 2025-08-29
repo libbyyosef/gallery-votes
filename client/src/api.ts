@@ -79,17 +79,3 @@ export async function sendVote(imageId: number, action: VoteAction): Promise<voi
   return applyReaction(imageId, null, action);
 }
 
-export async function downloadCSV(): Promise<void> {
-  // images router owns export now
-  const res = await fetch(`${API_BASE}/images/export_votes_as_csv`);
-  if (!res.ok) throw new Error("Failed to export CSV");
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "votes.csv";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}

@@ -1,7 +1,7 @@
 // src/App.tsx
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import type { ImageItem, VoteAction } from "./types";
-import { fetchImages, downloadCSV, applyReaction, fetchCounters } from "./api";
+import { fetchImages, applyReaction, fetchCounters } from "./api";
 import type { Reaction } from "./api";
 import { Header } from "./components/Header";
 import { ImageCard } from "./components/ImageCard";
@@ -9,17 +9,18 @@ import { FullscreenModal } from "./components/FullscreenModal";
 import { Box, Container, SimpleGrid, Text } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import { imagesAtom, reactionsAtom } from "./state/images";
+import { downloadCSVClient } from "./export";
 
-const BATCH_SIZE = 16;          // progressive reveal size
-const STEP_MS = 200;            // reveal cadence
-const POLL_MS = 5000;           // counters poll interval
-const WRITE_SETTLE_MS = 1200;   // skip polling briefly after a local write
+const BATCH_SIZE = 16;        // progressive reveal size
+const STEP_MS = 200;          // reveal cadence
+const POLL_MS = 5000;         // counters poll interval
+const WRITE_SETTLE_MS = 1200; // skip polling briefly after a local write
 
 const App: React.FC = () => {
   const [images, setImages] = useAtom(imagesAtom);
   const [reactions, setReactions] = useAtom(reactionsAtom);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<ImageItem | null>(null);
+  const [selected, setSelected] = useState<ImageItem | null>(null); // stores the item user clicked
   const [visibleCount, setVisibleCount] = useState(0);
   const didRevealRef = useRef(false);
   const lastWriteRef = useRef(0);
@@ -123,8 +124,13 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!images || images.length === 0) return;
 
-    const interval = setInterval(async () => {
+    const tick = async () => {
+      // Skip if tab not visible (saves work/bandwidth)
+      if (document.hidden) return;
+
+      // Also skip right after a local write to avoid clobbering optimistic UI
       if (Date.now() - lastWriteRef.current < WRITE_SETTLE_MS) return;
+
       try {
         const idList = images.map((it) => it.image_id);
         const map = await fetchCounters(idList);
@@ -139,14 +145,28 @@ const App: React.FC = () => {
       } catch {
         // ignore transient polling errors
       }
-    }, POLL_MS);
+    };
 
+    // run once immediately, then interval
+    tick();
+    const interval = setInterval(tick, POLL_MS);
     return () => clearInterval(interval);
   }, [images, setImages]);
 
+  // 🔁 Make the modal show a live item (so counters refresh there too)
+  const selectedLive: ImageItem | null =
+    selected && images
+      ? images.find((it) => it.image_id === selected.image_id) ?? selected
+      : selected;
+
   return (
     <Box bg="app.bg" minH="100%" color="app.text">
-      <Header onExport={downloadCSV} />
+      <Header
+        onExport={() => {
+          if (!images) return;
+          downloadCSVClient(images, reactions);
+        }}
+      />
 
       <Container maxW="7xl" py={4}>
         {error && (
@@ -178,9 +198,9 @@ const App: React.FC = () => {
       </Container>
 
       <FullscreenModal
-        open={!!selected}
-        item={selected}
-        reaction={selected ? reactions[selected.image_id] ?? null : null}
+        open={!!selectedLive}
+        item={selectedLive}
+        reaction={selectedLive ? reactions[selectedLive.image_id] ?? null : null}
         onClose={() => setSelected(null)}
         onVote={onVote}
       />
