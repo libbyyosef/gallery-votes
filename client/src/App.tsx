@@ -1,29 +1,26 @@
 // src/App.tsx
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import type { ImageItem, VoteAction } from "./types";
-import { fetchImages, applyReaction, fetchCounters } from "./api";
+import { fetchImages, applyReaction } from "./api";
 import type { Reaction } from "./api";
 import { Header } from "./components/Header";
 import { ImageCard } from "./components/ImageCard";
 import { FullscreenModal } from "./components/FullscreenModal";
-import { Box, Container, SimpleGrid, Text } from "@chakra-ui/react";
+import { Box, SimpleGrid, Text } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import { imagesAtom, reactionsAtom } from "./state/images";
 import { downloadCSVClient } from "./export";
 
-const BATCH_SIZE = 16;        // progressive reveal size
-const STEP_MS = 200;          // reveal cadence
-const POLL_MS = 5000;         // counters poll interval
-const WRITE_SETTLE_MS = 1200; // skip polling briefly after a local write
+const BATCH_SIZE = 16;
+const STEP_MS = 200;
 
 const App: React.FC = () => {
   const [images, setImages] = useAtom(imagesAtom);
   const [reactions, setReactions] = useAtom(reactionsAtom);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<ImageItem | null>(null); // stores the item user clicked
+  const [selected, setSelected] = useState<ImageItem | null>(null);
   const [visibleCount, setVisibleCount] = useState(0);
   const didRevealRef = useRef(false);
-  const lastWriteRef = useRef(0);
 
   // Fetch once into atom
   useEffect(() => {
@@ -58,7 +55,6 @@ const App: React.FC = () => {
       const prev: Reaction = reactions[id] ?? null;
       const next: Reaction = prev === action ? null : action;
 
-      // compute optimistic deltas
       const likesDelta =
         (prev === "like" ? -1 : 0) + (next === "like" ? +1 : 0);
       const dislikesDelta =
@@ -86,9 +82,6 @@ const App: React.FC = () => {
         else copy[id] = next;
         return copy;
       });
-
-      // record write time (pause poll briefly)
-      lastWriteRef.current = Date.now();
 
       try {
         await applyReaction(id, prev, next);
@@ -120,40 +113,7 @@ const App: React.FC = () => {
     [reactions, setImages, setReactions]
   );
 
-  // Poll only counters so different users see each other's likes within seconds
-  useEffect(() => {
-    if (!images || images.length === 0) return;
-
-    const tick = async () => {
-      // Skip if tab not visible (saves work/bandwidth)
-      if (document.hidden) return;
-
-      // Also skip right after a local write to avoid clobbering optimistic UI
-      if (Date.now() - lastWriteRef.current < WRITE_SETTLE_MS) return;
-
-      try {
-        const idList = images.map((it) => it.image_id);
-        const map = await fetchCounters(idList);
-        setImages((arr) =>
-          arr
-            ? arr.map((it) => {
-                const c = map[it.image_id];
-                return c ? { ...it, likes: c.likes, dislikes: c.dislikes } : it;
-              })
-            : arr
-        );
-      } catch {
-        // ignore transient polling errors
-      }
-    };
-
-    // run once immediately, then interval
-    tick();
-    const interval = setInterval(tick, POLL_MS);
-    return () => clearInterval(interval);
-  }, [images, setImages]);
-
-  // 🔁 Make the modal show a live item (so counters refresh there too)
+  // Live item for modal
   const selectedLive: ImageItem | null =
     selected && images
       ? images.find((it) => it.image_id === selected.image_id) ?? selected
@@ -168,7 +128,8 @@ const App: React.FC = () => {
         }}
       />
 
-      <Container maxW="7xl" py={4}>
+      {/* Full-width content with small side padding */}
+      <Box w="100%" px={{ base: 3, sm: 4, md: 6 }} py={4}>
         {error && (
           <Text color="tomato" textAlign="center">
             {error}
@@ -182,7 +143,17 @@ const App: React.FC = () => {
         )}
 
         {images && (
-          <SimpleGrid columns={{ base: 2, md: 3, lg: 4, xl: 5 }} spacing={4}>
+          /**
+           * Auto-fit grid:
+           * - minChildWidth tells Chakra to create as many columns as fit.
+           * - No fixed max container width, so it stretches to page edges.
+           */
+          <SimpleGrid
+            minChildWidth={{ base: "160px", sm: "200px", md: "220px", lg: "240px" }}
+            spacing={4}
+            justifyItems="stretch"
+            alignItems="stretch"
+          >
             {images.slice(0, visibleCount).map((img, i) => (
               <ImageCard
                 key={img.image_id}
@@ -195,7 +166,7 @@ const App: React.FC = () => {
             ))}
           </SimpleGrid>
         )}
-      </Container>
+      </Box>
 
       <FullscreenModal
         open={!!selectedLive}

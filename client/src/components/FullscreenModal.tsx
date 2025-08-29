@@ -1,113 +1,166 @@
-import React, { useState, useMemo } from 'react'
+// src/components/FullscreenModal.tsx
+import React from "react";
 import {
-  Modal, ModalOverlay, ModalContent, ModalBody, IconButton, HStack, Box, Text, Skeleton
-} from '@chakra-ui/react'
-  // not using @chakra-ui/icons to avoid extra dep; use plain "×" button
-import { AiFillLike, AiFillDislike } from 'react-icons/ai'
-import type { ImageItem, VoteAction } from '../types'
-import type { Reaction } from '../state/images'
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalBody,
+  IconButton,
+  Box,
+  HStack,
+  Text,
+  Image,
+} from "@chakra-ui/react";
+import { AiOutlineClose, AiFillLike, AiFillDislike } from "react-icons/ai";
+import type { ImageItem, VoteAction } from "../types";
+import type { Reaction } from "../api";
 
-interface FullscreenModalProps {
-  open: boolean
-  item: ImageItem | null
-  onClose: () => void
-  onVote: (id: number, action: VoteAction) => Promise<void>
-  reaction?: Reaction
-}
+type Props = {
+  open: boolean;
+  item: ImageItem | null;
+  reaction: Reaction | null;
+  onClose: () => void;
+  onVote: (id: number, action: VoteAction) => Promise<void>;
+};
 
-export const FullscreenModal: React.FC<FullscreenModalProps> = ({ open, item, onClose, onVote, reaction = null }) => {
-  const [loaded, setLoaded] = useState(false)
-  const [retry, setRetry] = useState(0)
+export const FullscreenModal: React.FC<Props> = ({
+  open,
+  item,
+  reaction,
+  onClose,
+  onVote,
+}) => {
+  if (!item) return null;
+  const { image_id, source_url, likes, dislikes } = item;
 
-  const imgSrc = useMemo(() => {
-    if (!item) return ''
-    if (!retry) return item.source_url
-    const url = new URL(item.source_url)
-    url.searchParams.set('retry', String(retry))
-    return url.toString()
-  }, [item, retry])
+  const isLiked = reaction === "like";
+  const isDisliked = reaction === "dislike";
 
-  const likeActive = reaction === 'like'
-  const dislikeActive = reaction === 'dislike'
+  // Same style as ImageCard overlay buttons (light, semi-transparent when inactive)
+  const overlayBtnStyle = (kind: "like" | "dislike") => {
+    const active = kind === "like" ? isLiked : isDisliked;
+    const token = kind === "like" ? "app.like" : "app.dislike";
+
+    return active
+      ? {
+          variant: "solid" as const,
+          bg: token,
+          color: "#08130a",
+          _hover: { bg: token, filter: "brightness(1.05)" },
+          _active: { transform: "scale(0.98)" },
+          borderRadius: "full",
+          size: "sm",
+          "aria-pressed": true,
+        }
+      : {
+          variant: "solid" as const,
+          bg: "whiteAlpha.700",
+          color: "blackAlpha.900",
+          borderWidth: "1px",
+          borderColor: "blackAlpha.200",
+          _hover: { bg: "whiteAlpha.800" },
+          _active: { transform: "scale(0.98)" },
+          borderRadius: "full",
+          size: "sm",
+          "aria-pressed": false,
+        };
+  };
 
   return (
     <Modal isOpen={open} onClose={onClose} size="6xl" isCentered>
       <ModalOverlay />
-      <ModalContent bg="transparent" boxShadow="none" overflow="hidden">
-        <ModalBody p={0} position="relative">
-          {/* Close button slightly inset from top-right */}
-          <IconButton
-            aria-label="Close"
-            onClick={onClose}
-            position="absolute"
-            top={3}
-            right={3}
-            zIndex={2}
-            size="sm"
-            bg="blackAlpha.600"
-            color="white"
-            _hover={{ bg: 'blackAlpha.700' }}
-            icon={<Box as="span" fontSize="lg" lineHeight={1}>×</Box>}
-          />
+      <ModalContent
+        bg="transparent"
+        boxShadow="none"
+        m={0}
+        maxW="min(92vw, 1200px)"
+        maxH="88vh"
+        position="relative"
+      >
+        {/* Colored Close button (light, semi-transparent) */}
+        <IconButton
+          aria-label="Close"
+          icon={<AiOutlineClose />}
+          position="absolute"
+          top="12px"
+          right="12px"
+          onClick={onClose}
+          zIndex={2}
+          borderRadius="full"
+          size="sm"
+          variant="solid"
+          bg="whiteAlpha.700"
+          color="blackAlpha.900"
+          borderWidth="1px"
+          borderColor="blackAlpha.200"
+          _hover={{ bg: "whiteAlpha.800" }}
+          _active={{ transform: "scale(0.98)" }}
+        />
 
-          {/* The image */}
-          <Box w="100%" bg="black" display="flex" justifyContent="center" alignItems="center">
-            {item && (
-              <Skeleton isLoaded={loaded} fadeDuration={0.3} w="100%">
-                <Box as="img"
-                  src={imgSrc}
-                  alt={`Image ${item.image_id}`}
-                  style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'contain', maxHeight: '80vh' }}
-                  loading="eager"
-                  onLoad={() => setLoaded(true)}
-                  onError={() => { if (retry < 1) setRetry(r => r + 1) }}
-                />
-              </Skeleton>
-            )}
-          </Box>
+        <ModalBody p={0} display="flex" alignItems="center" justifyContent="center">
+          {/* Rounded container that clips the image & overlay */}
+          <Box
+            lineHeight={0}
+            w="100%"
+            maxH="86vh"
+            position="relative"
+            borderRadius="lg"
+            overflow="hidden"
+            boxShadow="xl"
+          >
+            <Image
+              src={source_url}
+              alt={`Image ${image_id}`}
+              w="100%"
+              h="auto"
+              maxH="80vh"
+              objectFit="contain"
+              display="block"
+              mx="auto"
+            />
 
-          {/* Controls over a dark bar */}
-          {item && (
-            <HStack
-              spacing={6}
-              px={4}
-              py={3}
-              bg="blackAlpha.600"
-              backdropFilter="blur(4px)"
-              align="center"
-              justify="center"
+            {/* Bottom overlay with centered controls */}
+            <Box
+              position="absolute"
+              left={0}
+              right={0}
+              bottom={0}
+              px={3}
+              py={2}
+              bgGradient="linear(to-t, rgba(0,0,0,0.55), rgba(0,0,0,0))"
+              onClick={(e) => e.stopPropagation()}
             >
-              <HStack spacing={3}>
-                <IconButton
-                  aria-label="Like"
-                  aria-pressed={likeActive}
-                  icon={<AiFillLike size={22} />}
-                  size="md"
-                  onClick={() => onVote(item.image_id, 'like')}
-                  bg={likeActive ? 'app.like' : 'whiteAlpha.300'}
-                  color={likeActive ? '#08130a' : 'white'}
-                  _hover={{ filter: 'brightness(1.05)' }}
-                />
-                <Text color="white" minW="2ch" textAlign="right">{item.likes}</Text>
-              </HStack>
+              <HStack justify="center" spacing={6}>
+                <HStack spacing={2}>
+                  <IconButton
+                    aria-label="Like"
+                    title="Like"
+                    icon={<AiFillLike />}
+                    onClick={() => onVote(image_id, "like")}
+                    {...overlayBtnStyle("like")}
+                  />
+                  <Text as="span" minW="2ch" textAlign="right" color="whiteAlpha.900">
+                    {likes}
+                  </Text>
+                </HStack>
 
-              <HStack spacing={3}>
-                <IconButton
-                  aria-label="Dislike"
-                  aria-pressed={dislikeActive}
-                  icon={<AiFillDislike size={22} />}
-                  size="md"
-                  onClick={() => onVote(item.image_id, 'dislike')}
-                  bg={dislikeActive ? 'app.dislike' : 'whiteAlpha.300'}
-                  color={dislikeActive ? '#08130a' : 'white'}
-                  _hover={{ filter: 'brightness(1.05)' }}
-                />
-                <Text color="white" minW="2ch" textAlign="right">{item.dislikes}</Text>
+                <HStack spacing={2}>
+                  <IconButton
+                    aria-label="Dislike"
+                    title="Dislike"
+                    icon={<AiFillDislike />}
+                    onClick={() => onVote(image_id, "dislike")}
+                    {...overlayBtnStyle("dislike")}
+                  />
+                  <Text as="span" minW="2ch" textAlign="right" color="whiteAlpha.900">
+                    {dislikes}
+                  </Text>
+                </HStack>
               </HStack>
-            </HStack>
-          )}
+            </Box>
+          </Box>
         </ModalBody>
       </ModalContent>
     </Modal>
-  )
-}
+  );
+};
