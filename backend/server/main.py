@@ -13,5 +13,4 @@ app.add_middleware(
 )
 
 
-# NO '/api' prefix
 app.include_router(images_router)

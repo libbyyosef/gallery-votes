@@ -1,6 +1,5 @@
-# server/crud/image_crud.py
-from typing import List, Dict
-from fastapi import HTTPException, Response
+from typing import List
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text, select
 
