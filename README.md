@@ -1,4 +1,5 @@
 # Gallery Votes
+
 Browse a gallery of images and vote 👍/👎.  
 Open any image fullscreen, navigate with arrow keys, and export your votes to CSV.
 
@@ -12,19 +13,21 @@ Open any image fullscreen, navigate with arrow keys, and export your votes to CS
 git clone https://github.com/libbyyosef/gallery-votes.git
 cd gallery-votes
 docker-compose up --build
-Web UI → http://localhost:8080
+```
 
-API → http://localhost:8000
+- **Web UI** → http://localhost:8080
+- **API** → http://localhost:8000
 
-Stop & clean:
+### Stop & clean
 
-bash
-Copy code
-# Stop: Ctrl+C
+```bash
+# Stop: Ctrl+C in the compose terminal
 docker-compose down -v
-Project structure
-bash
-Copy code
+```
+
+## Project structure
+
+```
 .
 ├─ client/                          # React app (Vite + Chakra UI)
 │  ├─ src/
@@ -55,32 +58,25 @@ Copy code
 ├─ .env.dev                         # local dev env (ignored in Docker)
 ├─ .env.docker                      # docker-only env (loaded by compose)
 └─ README.md
-The database runs inside Docker and is managed automatically at startup (schema + seed).
-The web container (Nginx) serves the SPA and proxies /images/* to the backend.
+```
 
-Tech stack
-Frontend
+The database runs inside Docker and is initialized automatically (schema + seed).
+The web container (Nginx) serves the SPA and proxies `/images/*` to the backend.
 
-React + Vite + TypeScript
+## Tech stack
 
-Chakra UI
+### Frontend
+- React + Vite + TypeScript
+- Chakra UI
+- Jotai (state)
+- Vitest + Testing Library (jsdom)
 
-Jotai (state)
+### Backend
+- FastAPI
+- SQLAlchemy 2.x + Psycopg
+- Pydantic
 
-Testing: Vitest, Testing Library, jsdom
-
-Backend
-
-FastAPI
-
-SQLAlchemy 2.x + Psycopg
-
-Pydantic
-
-Infra
-
-PostgreSQL
-
-Nginx (SPA hosting + reverse proxy)
-
-Docker & docker-compose
+### Infra
+- PostgreSQL
+- Nginx (SPA hosting + reverse proxy)
+- Docker & docker-compose
